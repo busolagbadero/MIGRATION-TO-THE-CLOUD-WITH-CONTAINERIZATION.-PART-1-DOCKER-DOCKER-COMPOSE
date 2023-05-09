@@ -60,6 +60,7 @@ To run this script inside the MySQL server container, we can use the `docker exe
  `docker exec -i mysql-server mysql -uroot -p$MYSQL_PW < ./create_user.sql`
 
 Note that you may see a warning message when running this command that using a password on the command line interface can be insecure. However, since this is a local development environment, it is acceptable to ignore this warning.
+    
                                                                                                                             
 ## Step 4: Connecting to the MySQL server from a second container running the MySQL client utility                                               
 
@@ -80,6 +81,38 @@ Flags used:
                                                                            
 ![ml10](https://user-images.githubusercontent.com/94229949/236980056-5d53b88c-6b1d-42eb-86fc-50f574083218.png)
 
+## Step 5: Prepare database schema 
+ 
+Now we need to prepare a database schema so that the Tooling application can connect to it.
+ 
+i. Clone the Tooling-app repository `git clone https://github.com/darey-devops/tooling.git`.
+                                                                                          
+ii. On your terminal, export the location of the SQL file  `export tooling_db_schema=/home/ubuntu/tooling/html/tooling_db_schema.sql`.  
+                                                                                          
+iii. Use the SQL script to create the database and prepare the schema. With the docker exec command, you can execute a command in a running container. `docker exec -i mysql-server mysql -uroot -p$MYSQL_PW < $tooling_db_schema `.
+ 
+iv. Edit the .env file in the tooling/html folder with your db credentials used in your create_user.sql.                                                                           
+
+ ![ml11](https://user-images.githubusercontent.com/94229949/236983026-3bedb1d0-592d-4e19-86cd-0d0f4b84b4b4.png)
+ 
+ ![ml12](https://user-images.githubusercontent.com/94229949/236983071-65c9278f-570a-4041-8ffb-7c166c387409.png)
+ 
+ 
+To containerize an application, a special file named 'Dockerfile' needs to be created, which can be considered as a recipe or instruction for Docker to pack the application into a container. In this project, we will build the container using a pre-created Dockerfile.
+
+Make sure that you are inside the directory that contains the Dockerfile, and then build the container using the command: `docker build -t tooling:0.0.1 .` . The "-t" parameter specifies the image tag as tooling:0.0.1. Also, note the "." at the end, which tells Docker to locate the Dockerfile in the current directory.
+
+To run the container, use the command: `docker run --network tooling_app_network -p 8085:80 -it tooling:0.0.1.` The "-p" flag maps port 8085 on the host to port 80 in the container. The "-it" flags are used to start the container in interactive mode.
+ 
+ Run the container: `docker run --network tooling_app_network -p 8085:80 -it tooling:0.0.1.`
+ 
+ ![ml15](https://user-images.githubusercontent.com/94229949/236983682-850b722f-fab4-468c-b79f-21105d895042.png)
+ 
+ ![ml16](https://user-images.githubusercontent.com/94229949/236983723-b6b78c42-772d-4eda-954b-9dcef0b6caea.png)
+ 
+ ![ml17](https://user-images.githubusercontent.com/94229949/236983750-1ad332f6-e14c-4022-b411-6df588cb107d.png)
 
 
-                                                                           
+
+ 
+
