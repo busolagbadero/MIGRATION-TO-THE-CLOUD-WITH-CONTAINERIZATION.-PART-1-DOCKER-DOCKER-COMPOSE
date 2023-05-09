@@ -12,7 +12,74 @@ To get started, we'll need to download the Docker image for MySQL. This can be d
 
 ![ml1](https://user-images.githubusercontent.com/94229949/236973652-75263d6f-cbcb-428d-8eba-46bf4a95d73a.png)
 
+
 ![ml2](https://user-images.githubusercontent.com/94229949/236973683-67aee8e4-b605-47ea-992a-3055a537f5f4.png)
 
+## Step 2: Deploy the MySQL Container to your Docker Engine
+
+Once you have the image, move on to deploying a new MySQL container with: `docker run --name <container_name> -e MYSQL_ROOT_PASSWORD=<my-secret-pw> -d mysql/mysql-server:latest`
+
+* Replace <container_name> with the name of your choice. If you do not provide a name, Docker will generate a random one
+* The -d option instructs Docker to run the container as a service in the background
+* Replace <my-secret-pw> with your chosen password
+* In the command above, we used the latest version tag. This tag may differ according to the image you downloaded
+ 
+Then, check to see if the MySQL container is running: Assuming the container name specified is mysql-server `docker ps -a`.
+ 
+  ![t1](https://user-images.githubusercontent.com/94229949/236976763-fea8fb90-9cb7-48f6-a97c-bea965d5a564.png)
+
+  ## Step 3: Connecting to the MySQL Docker Container
+ 
+  To use a second container as a MySQL client, we need to create a custom network to allow both the MySQL server container and the application container to connect. Although creating a custom network is not necessary since Docker will use the default network by default.
+
+To create a custom network, we can use the docker network create command, as shown below:
+ 
+  `docker network create --subnet=172.18.0.0/24 tooling_app_network `
+  
+This command will create a new network called `tooling_app_network` with a subnet of 172.18.0.0/24.
+
+To run the MySQL server container on this network, we can use the `docker run` command with the appropriate flags and options. First, we need to set an environment variable to store the root password for MySQL. We can do this by running the following command: export MYSQL_PW=
+
+Then, we can pull the MySQL Docker image and run the container with the following command: docker run --network tooling_app_network -h mysqlserverhost --name=mysql-server -e MYSQL_ROOT_PASSWORD=$MYSQL_PW -d mysql/mysql-server:latest
+
+  
+Here, we're running the container in detached mode (`-d `flag) and connecting it to the tooling_app_network network (`--network` flag). We're also setting the hostname of the container to mysqlserverhost (`-h` flag) and naming the container mysql-server (`--name` flag). Finally, we're passing the root password environment variable to the container (`-e` flag).
+
+Note that the docker run command may take a few moments to complete as it pulls the MySQL Docker image and starts the container.
+  
+![ml6](https://user-images.githubusercontent.com/94229949/236978302-48110bce-1a4e-4130-a025-1cf03a2d3475.png)
+
+When working with a MySQL server in a Docker container, it is important to create a new user to connect to the server remotely, instead of using the root user. To do this, we can create an SQL script that creates a new user and grants them the necessary privileges.
+
+In your GitHub documentation, you can create a new file named create_user.sql in your project directory and copy the following code into it:
+  
+  
+![mln](https://user-images.githubusercontent.com/94229949/236978980-0e5cb594-7323-4c6e-b9d0-3b477c5d19b5.png)
+
+To run this script inside the MySQL server container, we can use the `docker exec command`. The following command will execute the `create_user.sql` script inside the container, using the MySQL root user and password that we defined earlier:
+ `docker exec -i mysql-server mysql -uroot -p$MYSQL_PW < ./create_user.sql`
+
+Note that you may see a warning message when running this command that using a password on the command line interface can be insecure. However, since this is a local development environment, it is acceptable to ignore this warning.
+                                                                                                                            
+## Step 4: Connecting to the MySQL server from a second container running the MySQL client utility                                               
+
+                                                                           
+The good thing about this approach is that you do not have to install any client tool on your laptop, and you do not need to connect directly to the container running the MySQL server
+                            
+Run the MySQL Client Container: `docker run --network tooling_app_network --name mysql-client -it --rm mysql mysql -h mysqlserverhost -u  -p`.                                                                          
+ 
+Flags used:
+* --name gives the container a name
+* -it runs in interactive mode and Allocate a pseudo-TTY
+* --rm automatically removes the container when it exits
+* --network connects a container to a network
+* -h a MySQL flag specifying the MySQL server Container hostname
+* -u user created from the SQL script
+* -p password specified for the user created from the SQL script  
+                                                                           
+                                                                           
+![ml10](https://user-images.githubusercontent.com/94229949/236980056-5d53b88c-6b1d-42eb-86fc-50f574083218.png)
 
 
+
+                                                                           
